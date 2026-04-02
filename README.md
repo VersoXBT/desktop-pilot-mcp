@@ -123,13 +123,57 @@ The **Smart Router** classifies each app (scriptable, Electron, native, unknown)
 
 ---
 
-## Installation
+## Quick Start (2 minutes)
+
+**Step 1.** Add to your Claude config and restart Claude:
+
+For **Claude Code**, add to `~/.claude.json` under your project's `mcpServers`:
+
+```json
+{
+  "desktop-pilot": {
+    "command": "npx",
+    "args": ["-y", "desktop-pilot-mcp"]
+  }
+}
+```
+
+For **Claude Desktop**, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "desktop-pilot": {
+      "command": "npx",
+      "args": ["-y", "desktop-pilot-mcp"]
+    }
+  }
+}
+```
+
+**Step 2.** Grant Accessibility permission when macOS prompts you (one-time).
+
+If the prompt doesn't appear: **System Settings > Privacy & Security > Accessibility** -- add your terminal app or Claude Desktop.
+
+**Step 3.** Ask Claude to interact with any app:
+
+> "Take a snapshot of Telegram and show me what's on screen"
+
+That's it. No API keys, no accounts, no configuration files.
+
+---
+
+## Installation (alternative methods)
 
 ### Requirements
 
 - macOS 13.0+ (Ventura or later)
 - Swift 6.0+ (included with Xcode 16+)
-- Accessibility permission (one-time grant in System Settings)
+- Node.js 16+ (for npx) or build from source directly
+
+### Via npx (recommended)
+
+No install needed. The npx config above downloads the package and builds the Swift binary automatically on first run. Subsequent launches use the cached build.
 
 ### Build from source
 
@@ -139,53 +183,21 @@ cd desktop-pilot-mcp
 swift build -c release
 ```
 
-The compiled binary is at `.build/release/desktop-pilot-mcp` (427KB, zero runtime dependencies).
-
-### Grant Accessibility Permission
-
-On first launch, macOS will prompt for Accessibility access. If it doesn't:
-
-1. Open **System Settings > Privacy & Security > Accessibility**
-2. Add the `desktop-pilot-mcp` binary (or the terminal app running it)
-3. Restart the server
-
-For screenshot functionality, also grant **Screen Recording** permission.
-
----
-
-## Configuration
-
-### Claude Code
-
-Add to `~/.claude.json`:
+Then point your Claude config to the binary directly:
 
 ```json
 {
-  "mcpServers": {
-    "desktop-pilot": {
-      "command": "/absolute/path/to/desktop-pilot-mcp/.build/release/desktop-pilot-mcp",
-      "args": []
-    }
+  "desktop-pilot": {
+    "command": "/absolute/path/to/desktop-pilot-mcp/.build/release/desktop-pilot-mcp",
+    "args": []
   }
 }
 ```
 
-### Claude Desktop
+### Permissions
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "desktop-pilot": {
-      "command": "/absolute/path/to/desktop-pilot-mcp/.build/release/desktop-pilot-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-Replace `/absolute/path/to` with the actual path where you cloned the repo.
+- **Accessibility** (required): Lets Desktop Pilot read and interact with app UI trees
+- **Screen Recording** (optional): Only needed for the `pilot_screenshot` fallback tool
 
 ---
 
