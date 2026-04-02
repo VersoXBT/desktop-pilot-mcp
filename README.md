@@ -38,6 +38,74 @@ No coordinates. No screenshots. No guessing. Just refs.
 
 ---
 
+## Quick Start (2 minutes)
+
+```bash
+npx desktop-pilot-mcp
+```
+
+**Step 1.** Add to your Claude config and restart Claude:
+
+For **Claude Code**, add to `~/.claude.json` under your project's `mcpServers`:
+
+```json
+{
+  "desktop-pilot": {
+    "command": "npx",
+    "args": ["-y", "desktop-pilot-mcp"]
+  }
+}
+```
+
+For **Claude Desktop**, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "desktop-pilot": {
+      "command": "npx",
+      "args": ["-y", "desktop-pilot-mcp"]
+    }
+  }
+}
+```
+
+**Step 2.** Grant Accessibility permission when macOS prompts you (one-time).
+
+If the prompt doesn't appear: **System Settings > Privacy & Security > Accessibility** -- add your terminal app or Claude Desktop.
+
+**Step 3.** Ask Claude to interact with any app:
+
+> "Take a snapshot of Telegram and show me what's on screen"
+
+That's it. No API keys, no accounts, no configuration files.
+
+<details>
+<summary>Alternative: build from source</summary>
+
+Requires Swift 6.0+ (included with Xcode 16+).
+
+```bash
+git clone https://github.com/VersoXBT/desktop-pilot-mcp.git
+cd desktop-pilot-mcp
+swift build -c release
+```
+
+Then use the binary path directly in your Claude config:
+
+```json
+{
+  "desktop-pilot": {
+    "command": "/absolute/path/to/desktop-pilot-mcp/.build/release/desktop-pilot-mcp",
+    "args": []
+  }
+}
+```
+
+</details>
+
+---
+
 ## Benchmarks
 
 Real measurements from testing against Telegram, Finder, and other macOS apps:
@@ -120,84 +188,6 @@ The **Smart Router** classifies each app (scriptable, Electron, native, unknown)
 | Menu bar navigation | Yes | No | No | No | Via script |
 | Zero dependencies | Yes | N/A | Node.js | Node.js | Node.js |
 | Binary size | 427KB | N/A | ~50MB+ | ~30MB+ | ~30MB+ |
-
----
-
-## Quick Start (2 minutes)
-
-**Step 1.** Add to your Claude config and restart Claude:
-
-For **Claude Code**, add to `~/.claude.json` under your project's `mcpServers`:
-
-```json
-{
-  "desktop-pilot": {
-    "command": "npx",
-    "args": ["-y", "desktop-pilot-mcp"]
-  }
-}
-```
-
-For **Claude Desktop**, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "desktop-pilot": {
-      "command": "npx",
-      "args": ["-y", "desktop-pilot-mcp"]
-    }
-  }
-}
-```
-
-**Step 2.** Grant Accessibility permission when macOS prompts you (one-time).
-
-If the prompt doesn't appear: **System Settings > Privacy & Security > Accessibility** -- add your terminal app or Claude Desktop.
-
-**Step 3.** Ask Claude to interact with any app:
-
-> "Take a snapshot of Telegram and show me what's on screen"
-
-That's it. No API keys, no accounts, no configuration files.
-
----
-
-## Installation (alternative methods)
-
-### Requirements
-
-- macOS 13.0+ (Ventura or later)
-- Swift 6.0+ (included with Xcode 16+)
-- Node.js 16+ (for npx) or build from source directly
-
-### Via npx (recommended)
-
-No install needed. The npx config above downloads the package and builds the Swift binary automatically on first run. Subsequent launches use the cached build.
-
-### Build from source
-
-```bash
-git clone https://github.com/VersoXBT/desktop-pilot-mcp.git
-cd desktop-pilot-mcp
-swift build -c release
-```
-
-Then point your Claude config to the binary directly:
-
-```json
-{
-  "desktop-pilot": {
-    "command": "/absolute/path/to/desktop-pilot-mcp/.build/release/desktop-pilot-mcp",
-    "args": []
-  }
-}
-```
-
-### Permissions
-
-- **Accessibility** (required): Lets Desktop Pilot read and interact with app UI trees
-- **Screen Recording** (optional): Only needed for the `pilot_screenshot` fallback tool
 
 ---
 
