@@ -4,21 +4,23 @@ import Foundation
 // MARK: - Tool Registry
 
 /// Registers all Desktop Pilot tools and dispatches calls to real implementations.
-final class PilotToolHandler: ToolHandler, @unchecked Sendable {
+public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
 
     private let bridge: AXBridge
     private let store: ElementStore
     private let registry: AppRegistry
     private let snapshotBuilder: SnapshotBuilder
+    private let screenshotLayer: ScreenshotLayer
 
-    init(bridge: AXBridge, store: ElementStore) {
+    public init(bridge: AXBridge, store: ElementStore) {
         self.bridge = bridge
         self.store = store
         self.registry = AppRegistry()
         self.snapshotBuilder = SnapshotBuilder(bridge: bridge)
+        self.screenshotLayer = ScreenshotLayer(bridge: bridge, store: store)
     }
 
-    func listTools() -> [ToolDefinition] {
+    public func listTools() -> [ToolDefinition] {
         [
             snapshotTool,
             clickTool,
@@ -33,7 +35,7 @@ final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         ]
     }
 
-    func callTool(name: String, arguments: JSONValue?) async throws -> MCPToolResult {
+    public func callTool(name: String, arguments: JSONValue?) async throws -> MCPToolResult {
         switch name {
         case "pilot_snapshot":
             return await handleSnapshot(arguments)
@@ -696,10 +698,47 @@ final class PilotToolHandler: ToolHandler, @unchecked Sendable {
     }
 
     private func handleScreenshot(_ arguments: JSONValue?) async -> MCPToolResult {
-        // Phase 3 implementation — for now return a helpful message
-        return .error(
-            "pilot_screenshot is not yet implemented (Phase 3). "
-            + "Use pilot_snapshot for UI state — it's faster and more useful."
+        let ref = arguments?.stringValue(forKey: "ref")
+
+        // If a ref is provided, capture that element's bounds
+        if let ref {
+            guard let wrapper = await store.resolve(ref) else {
+                return .error("Unknown ref '\(ref)'. Take a new snapshot first.")
+            }
+
+            guard let bounds = bridge.getBounds(wrapper.element) else {
+                return .error(
+                    "Could not determine bounds for element \(ref). "
+                    + "The element may not have a visible frame."
+                )
+            }
+
+            guard let base64 = screenshotLayer.captureElementBase64(bounds: bounds) else {
+                return .error(
+                    "Failed to capture screenshot of element \(ref). "
+                    + "Screen recording permission may not be granted."
+                )
+            }
+
+            return MCPToolResult(
+                content: [.image(base64: base64, mimeType: "image/png")],
+                isError: false
+            )
+        }
+
+        // No ref -- capture full screen
+        guard let base64 = screenshotLayer.captureFullScreenBase64() else {
+            return .error(
+                "Failed to capture full screen screenshot. "
+                + "Screen recording permission may not be granted. "
+                + "Go to System Settings > Privacy & Security > Screen Recording "
+                + "and add this application."
+            )
+        }
+
+        return MCPToolResult(
+            content: [.image(base64: base64, mimeType: "image/png")],
+            isError: false
         )
     }
 
