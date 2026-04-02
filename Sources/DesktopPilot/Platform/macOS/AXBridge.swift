@@ -138,15 +138,15 @@ public final class AXBridge: @unchecked Sendable {
 
     /// Get the bounding rectangle of an element in screen coordinates.
     func getBounds(_ element: AXUIElement) -> ElementBounds? {
-        guard let posValue = getAttribute(element, kAXPositionAttribute) else { return nil }
+        guard let posValue = getAttribute(element, kAXPositionAttribute),
+              CFGetTypeID(posValue) == AXValueGetTypeID() else { return nil }
         var point = CGPoint.zero
-        // swiftlint:disable force_cast
         guard AXValueGetValue(posValue as! AXValue, .cgPoint, &point) else { return nil }
 
-        guard let sizeValue = getAttribute(element, kAXSizeAttribute) else { return nil }
+        guard let sizeValue = getAttribute(element, kAXSizeAttribute),
+              CFGetTypeID(sizeValue) == AXValueGetTypeID() else { return nil }
         var size = CGSize.zero
         guard AXValueGetValue(sizeValue as! AXValue, .cgSize, &size) else { return nil }
-        // swiftlint:enable force_cast
 
         return ElementBounds(
             x: Double(point.x),
@@ -161,7 +161,7 @@ public final class AXBridge: @unchecked Sendable {
     /// Get the currently focused UI element inside an app.
     func getFocusedElement(_ appElement: AXUIElement) -> AXUIElement? {
         guard let value = getAttribute(appElement, kAXFocusedUIElementAttribute) else { return nil }
-        // value is guaranteed to be AXUIElement when the attribute exists
+        // AXFocusedUIElement always returns AXUIElement when the attribute exists
         return (value as! AXUIElement) // swiftlint:disable:this force_cast
     }
 
@@ -175,6 +175,7 @@ public final class AXBridge: @unchecked Sendable {
     /// Get the menu bar element for an app.
     func getMenuBar(_ appElement: AXUIElement) -> AXUIElement? {
         guard let value = getAttribute(appElement, kAXMenuBarAttribute) else { return nil }
+        // AXMenuBar always returns AXUIElement when the attribute exists
         return (value as! AXUIElement) // swiftlint:disable:this force_cast
     }
 

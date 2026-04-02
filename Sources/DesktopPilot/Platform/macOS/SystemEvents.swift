@@ -45,10 +45,11 @@ struct SystemEventsHelper: Sendable {
 
         do {
             try process.run()
-            process.waitUntilExit()
 
+            // Read pipes before waiting to avoid deadlock on large output
             let outData = stdout.fileHandleForReading.readDataToEndOfFile()
             let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
             let output = String(data: outData, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let errorOutput = String(data: errData, encoding: .utf8)?
@@ -77,10 +78,11 @@ struct SystemEventsHelper: Sendable {
 
         do {
             try process.run()
-            process.waitUntilExit()
 
+            // Read pipes before waiting to avoid deadlock on large output
             let outData = stdout.fileHandleForReading.readDataToEndOfFile()
             let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
             let output = String(data: outData, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let errorOutput = String(data: errData, encoding: .utf8)?
@@ -127,9 +129,10 @@ struct SystemEventsHelper: Sendable {
         let process = Process()
         let pipe = Pipe()
 
+        let sanitizedName = appName.replacingOccurrences(of: "'", with: "'\\''")
         process.executableURL = URL(fileURLWithPath: "/usr/bin/mdfind")
         process.arguments = [
-            "kMDItemDisplayName == '\(appName)' && kMDItemContentType == 'com.apple.application-bundle'"
+            "kMDItemDisplayName == '\(sanitizedName)' && kMDItemContentType == 'com.apple.application-bundle'"
         ]
         process.standardOutput = pipe
         process.standardError = Pipe()
@@ -319,5 +322,8 @@ struct SystemEventsHelper: Sendable {
         return input
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
     }
 }

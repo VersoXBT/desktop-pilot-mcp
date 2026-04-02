@@ -253,18 +253,13 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         ToolDefinition(
             name: "pilot_script",
             description: """
-                Run an AppleScript or JXA script targeting a specific app. Use for operations \
-                that are easier to express in script form than through individual UI actions.
+                Run an AppleScript or JXA script. The code runs globally with user-level \
+                privileges via osascript. Use for operations that are easier to express in \
+                script form than through individual UI actions. The script has a 30-second timeout.
                 """,
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([
-                    "app": .object([
-                        "type": .string("string"),
-                        "description": .string(
-                            "Target app name."
-                        ),
-                    ]),
                     "code": .object([
                         "type": .string("string"),
                         "description": .string(
@@ -282,7 +277,7 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
                         ]),
                     ]),
                 ]),
-                "required": .array([.string("app"), .string("code")]),
+                "required": .array([.string("code")]),
             ])
         )
     }
@@ -382,7 +377,8 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         }
 
         let appName = arguments?.stringValue(forKey: "app")
-        let maxDepth = arguments?.intValue(forKey: "maxDepth") ?? 10
+        let rawDepth = arguments?.intValue(forKey: "maxDepth") ?? 10
+        let maxDepth = max(1, min(rawDepth, 50))
 
         guard let app = resolveApp(appName) else {
             return .error("Could not find app: \(appName ?? "frontmost"). Is it running?")
@@ -657,6 +653,8 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         }
     }
 
+    private static let scriptTimeoutSeconds: Double = 30
+
     private func handleScript(_ arguments: JSONValue?) async -> MCPToolResult {
         guard let code = arguments?.stringValue(forKey: "code") else {
             return .error("Missing required parameter: code")
@@ -665,7 +663,8 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         let language = arguments?.stringValue(forKey: "language") ?? "applescript"
 
         let process = Process()
-        let pipe = Pipe()
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
 
         if language == "jxa" {
             process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
@@ -675,25 +674,49 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
             process.arguments = ["-e", code]
         }
 
-        process.standardOutput = pipe
-        process.standardError = pipe
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
 
         do {
             try process.run()
+
+            // Schedule a kill after timeout
+            let killItem = DispatchWorkItem { [weak process] in
+                process?.terminate()
+            }
+            DispatchQueue.global().asyncAfter(
+                deadline: .now() + Self.scriptTimeoutSeconds,
+                execute: killItem
+            )
+
+            // Read pipes before waiting to avoid deadlock on large output
+            let outData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            let errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
 
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            ) ?? ""
+            // Cancel the kill timer if process finished in time
+            killItem.cancel()
+
+            let wasKilled = process.terminationStatus == 15 // SIGTERM
+            if wasKilled {
+                return .error(
+                    "Script timed out after \(Int(Self.scriptTimeoutSeconds)) seconds."
+                )
+            }
+
+            let output = String(data: outData, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let errorOutput = String(data: errData, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             if process.terminationStatus == 0 {
                 return .success(output.isEmpty ? "Script executed successfully." : output)
             } else {
-                return .error("Script failed (exit \(process.terminationStatus)): \(output)")
+                let msg = errorOutput.isEmpty ? output : errorOutput
+                return .error("Script failed (exit \(process.terminationStatus)): \(msg)")
             }
         } catch {
-            return .error("Failed to run script: \(error)")
+            return .error("Failed to run script: \(error.localizedDescription)")
         }
     }
 
@@ -742,10 +765,16 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
         )
     }
 
+    private static let maxBatchSize = 20
+
     private func handleBatch(_ arguments: JSONValue?) async -> MCPToolResult {
         guard case .object(let dict) = arguments,
               case .array(let actions) = dict["actions"] else {
             return .error("Missing required parameter: actions")
+        }
+
+        if actions.count > Self.maxBatchSize {
+            return .error("Batch too large: \(actions.count) actions (max \(Self.maxBatchSize)).")
         }
 
         var results: [String] = []
@@ -755,6 +784,12 @@ public final class PilotToolHandler: ToolHandler, @unchecked Sendable {
                 results.append("action[\(index)]: invalid format")
                 continue
             }
+
+            if toolName == "pilot_batch" {
+                results.append("action[\(index)]: pilot_batch cannot be nested")
+                continue
+            }
+
             do {
                 let toolResult = try await callTool(
                     name: toolName,

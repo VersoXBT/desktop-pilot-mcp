@@ -17,7 +17,6 @@ let package = Package(
             name: "DesktopPilot",
             dependencies: [],
             path: "Sources/DesktopPilot",
-            exclude: ["main.swift"],
             linkerSettings: [
                 .linkedFramework("ApplicationServices"),
                 .linkedFramework("AppKit"),
