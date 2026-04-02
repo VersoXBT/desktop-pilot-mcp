@@ -314,6 +314,11 @@ public final class MCPServer: Sendable {
 
     /// Start the server and process messages from stdin until EOF.
     public func run() async {
+        // Disable stdout buffering so MCP responses are sent immediately.
+        // Without this, pipe-buffered stdout (when spawned by Claude Code)
+        // holds responses in the buffer and the client never receives them.
+        setbuf(stdout, nil)
+
         Log.info("Starting \(serverName) v\(serverVersion)")
 
         let stdin = FileHandle.standardInput
@@ -529,6 +534,7 @@ public final class MCPServer: Sendable {
 
             FileHandle.standardOutput.write(headerData)
             FileHandle.standardOutput.write(data)
+            fflush(stdout)
         } catch {
             Log.error("Failed to encode response: \(error)")
         }
