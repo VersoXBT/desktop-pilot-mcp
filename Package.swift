@@ -8,19 +8,26 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "desktop-pilot-mcp", targets: ["DesktopPilot"])
+        .executable(name: "desktop-pilot-mcp", targets: ["DesktopPilotCLI"]),
+        .library(name: "DesktopPilot", targets: ["DesktopPilot"])
     ],
     dependencies: [],
     targets: [
-        .executableTarget(
+        .target(
             name: "DesktopPilot",
             dependencies: [],
             path: "Sources/DesktopPilot",
+            exclude: ["main.swift"],
             linkerSettings: [
                 .linkedFramework("ApplicationServices"),
                 .linkedFramework("AppKit"),
                 .linkedFramework("CoreGraphics")
             ]
+        ),
+        .executableTarget(
+            name: "DesktopPilotCLI",
+            dependencies: ["DesktopPilot"],
+            path: "Sources/DesktopPilotCLI"
         ),
         .testTarget(
             name: "DesktopPilotTests",
