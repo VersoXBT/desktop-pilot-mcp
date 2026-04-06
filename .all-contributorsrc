@@ -1,0 +1,26 @@
+{
+  "projectName": "desktop-pilot-mcp",
+  "projectOwner": "VersoXBT",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": ["README.md"],
+  "imageSize": 80,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "VersoXBT",
+      "name": "VersoXBT",
+      "avatar_url": "https://avatars.githubusercontent.com/u/202813801?v=4",
+      "profile": "https://github.com/VersoXBT",
+      "contributions": ["code", "doc"]
+    },
+    {
+      "login": "claude",
+      "name": "Claude",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81847?v=4",
+      "profile": "https://github.com/claude",
+      "contributions": ["ideas", "tool"]
+    }
+  ]
+}

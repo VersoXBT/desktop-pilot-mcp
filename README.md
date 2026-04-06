@@ -1,3 +1,14 @@
+<div align="center">
+
+[![Stars](https://img.shields.io/github/stars/VersoXBT/desktop-pilot-mcp?style=flat-square&logo=github&label=Stars)](https://github.com/VersoXBT/desktop-pilot-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Swift](https://img.shields.io/badge/Swift-5.9+-orange?style=flat-square&logo=swift)](https://swift.org)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-blueviolet?style=flat-square)]()
+[![macOS](https://img.shields.io/badge/macOS-native-black?style=flat-square&logo=apple)]()
+[![Speed](https://img.shields.io/badge/Speed-30--100x%20faster-brightgreen?style=flat-square)]()
+
+</div>
+
 <p align="center">
   <h1 align="center">Desktop Pilot MCP</h1>
   <p align="center">Native macOS automation for Claude. 30-100x faster than screenshots.</p>
@@ -462,3 +473,14 @@ The project is split into a library target (`DesktopPilot`) and an executable ta
 ## License
 
 MIT
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/VersoXBT"><img src="https://avatars.githubusercontent.com/u/202813801?v=4" width="80px;" alt=""/><br /><sub><b>VersoXBT</b></sub></a><br />💻 📖</td>
+    <td align="center"><a href="https://github.com/claude"><img src="https://avatars.githubusercontent.com/u/81847?v=4" width="80px;" alt=""/><br /><sub><b>Claude</b></sub></a><br />🤖 💡</td>
+  </tr>
+</table>
+<!-- ALL-CONTRIBUTORS-LIST:END -->
